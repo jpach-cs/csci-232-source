@@ -16,6 +16,10 @@ jobs:
           mkdir -p build_output
           chmod 777 build_output
 
+      #zbedny komentarz
+
+      # Dynamiczna pętla przechodząca przez wszystkie foldery wykładów
+      # Kompilujemy HTML i PDF, a potem dorzucamy do build_output wszystkie zasoby z folderu źródłowego
       - name: Compile All Presentations
         run: |
           for dir in presentations/*/; do
@@ -28,6 +32,7 @@ jobs:
               if [ -n "$md_file" ]; then
                 echo "Found markdown file: $md_file"
                 
+                # Tworzymy podfolder wyjściowy i nadajemy uprawnienia zapisu dla kontenera
                 mkdir -p "build_output/$dir_name"
                 chmod 777 "build_output/$dir_name"
                 
@@ -46,6 +51,9 @@ jobs:
                   $theme_arg --html --allow-local-files --pdf \
                   "$md_file" -o "build_output/$dir_name/index.pdf"
                 
+                # ROZWIĄZANIE: Kopiujemy absolutnie wszystkie pliki z folderu źródłowego wykładu (obrazy, style itp.)
+                # bezpośrednio do folderu wyjściowego, aby HTML miał do nich dostęp obok siebie.
+                # Wykluczamy plik źródłowy .md, żeby nie śmiecić na serwerze.
                 find "$dir" -maxdepth 1 -type f ! -name "*.md" ! -name "*.css" ! -name "*.pdf" -exec cp {} "build_output/$dir_name/" \;
                 
               else
@@ -56,13 +64,13 @@ jobs:
 
       - name: Deploy to Public Repository
         run: |
-          # 1. Klonowanie publicznego repozytorium strony za pomocą poprawionego tokenu GH_PAT
+          # 1. Klonowanie publicznego repozytorium strony za pomocą tokenu
           git clone https://${{ secrets.GH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
           
-          # 2. Upewnienie się, że bazowy folder na slajdy CSCI 232 istnieje
+          # 2. Upewnienie się, że bazowy folder na slajdy istnieje
           mkdir -p public_repo/teaching/csci-232/slides/
           
-          # 3. Kopiowanie do folderu 232
+          # 3. Kopiowanie całej struktury folderów (teraz zawierających HTML, PDF oraz grafiki towarzyszące)
           cp -r build_output/* public_repo/teaching/csci-232/slides/
           
           # 4. Konfiguracja tożsamości bota Git
@@ -70,7 +78,7 @@ jobs:
           git config --global user.name "Marp Autograder Bot"
           git config --global user.email "bot@mtech.edu"
           
-          # 5. Sprawdzenie różnic i wypchnięcie na produkcję
+          # 5. Sprawdzenie różnic i wypchnięcie na produkcję nowych plików i zasobów
           git add .
           git diff-index --quiet HEAD || git commit -m "Automated bulk update of CSCI 232 slides and assets"
           git push origin main
