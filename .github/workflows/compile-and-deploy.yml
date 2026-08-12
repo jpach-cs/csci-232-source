@@ -16,8 +16,6 @@ jobs:
           mkdir -p build_output
           chmod 777 build_output
 
-      # Dynamiczna pętla przechodząca przez wszystkie foldery wykładów
-      # Kompilujemy HTML i PDF, a potem dorzucamy do build_output wszystkie zasoby z folderu źródłowego
       - name: Compile All Presentations
         run: |
           for dir in presentations/*/; do
@@ -30,7 +28,6 @@ jobs:
               if [ -n "$md_file" ]; then
                 echo "Found markdown file: $md_file"
                 
-                # Tworzymy podfolder wyjściowy i nadajemy uprawnienia zapisu dla kontenera
                 mkdir -p "build_output/$dir_name"
                 chmod 777 "build_output/$dir_name"
                 
@@ -49,9 +46,6 @@ jobs:
                   $theme_arg --html --allow-local-files --pdf \
                   "$md_file" -o "build_output/$dir_name/index.pdf"
                 
-                # ROZWIĄZANIE: Kopiujemy absolutnie wszystkie pliki z folderu źródłowego wykładu (obrazy, style itp.)
-                # bezpośrednio do folderu wyjściowego, aby HTML miał do nich dostęp obok siebie.
-                # Wykluczamy plik źródłowy .md, żeby nie śmiecić na serwerze.
                 find "$dir" -maxdepth 1 -type f ! -name "*.md" ! -name "*.css" ! -name "*.pdf" -exec cp {} "build_output/$dir_name/" \;
                 
               else
@@ -62,26 +56,21 @@ jobs:
 
       - name: Deploy to Public Repository
         run: |
-          # 1. Konfiguracja tożsamości bota Git (globalnie lub lokalnie w repo)
+          # 1. Klonowanie publicznego repozytorium strony za pomocą poprawionego tokenu GH_PAT
+          git clone https://${{ secrets.GH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
+          
+          # 2. Upewnienie się, że bazowy folder na slajdy CSCI 232 istnieje
+          mkdir -p public_repo/teaching/csci-232/slides/
+          
+          # 3. Kopiowanie do folderu 232
+          cp -r build_output/* public_repo/teaching/csci-232/slides/
+          
+          # 4. Konfiguracja tożsamości bota Git
+          cd public_repo
           git config --global user.name "Marp Autograder Bot"
           git config --global user.email "bot@mtech.edu"
           
-          # 2. Klonowanie publicznego repozytorium strony za pomocą tokenu
-          git clone https://${{ secrets.PGH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
-          
-          # 3. Wejście do folderu repozytorium
-          cd public_repo
-          
-          # Upewnienie się, że URL zdalny na pewno zawiera token (zapobiega pytaniom o hasło przy pushu)
-          git remote set-url origin https://${{ secrets.PGH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git
-          
-          # 4. Upewnienie się, że bazowy folder na slajdy istnieje
-          mkdir -p teaching/csci-232/slides/
-          
-          # 5. Kopiowanie całej struktury folderów z poziomu wyżej (../build_output/*)
-          cp -r ../build_output/* teaching/csci-232/slides/
-          
-          # 6. Sprawdzenie różnic, dodanie, commit i push
+          # 5. Sprawdzenie różnic i wypchnięcie na produkcję
           git add .
           git diff-index --quiet HEAD || git commit -m "Automated bulk update of CSCI 232 slides and assets"
           git push origin main
