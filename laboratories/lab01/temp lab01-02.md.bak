@@ -1,0 +1,239 @@
+temp lab01-02
+
+---
+
+<!-- _class: caption-slide -->
+<!-- _paginate: skip -->
+
+# Positional notation
+<!-- ## Subtitle -->
+
+---
+
+# Positional notation
+<div class = "justify lh-15">
+
+- Usually means the extension to any base (2, …, 8,10,16 etc.) of the Hindu–Arabic numeral system (or decimal system). 
+- A positional system is a numeral system in which the contribution of a digit to the value of a number is the value of the digit multiplied by a factor determined by the position of the digit. 
+- In modern positional systems, such as the decimal system, the position of the digit means that its value must be multiplied by some value: in 444, the three identical symbols represent four hundreds, four tens, and four units, respectively, due to their different positions in the digit string.
+
+
+</div>
+
+---
+
+# Base of the numeral system ![base](base.png)
+
+<div class = "justify lh-20">
+
+- In mathematical numeral systems the radix r is usually the number of unique digits, including zero, that a positional numeral system uses to represent numbers.
+- The highest symbol of a positional numeral system usually has the value one less than the value of the radix of that numeral system. The standard positional numeral systems differ from one another only in the base they use.
+- The radix is an integer that is greater than 1, since a radix of zero would not have any digits, and a radix of 1 would only have the zero digit. 
+
+</div>
+
+---
+
+# Binary numeral system ![base](base.png)
+
+$$A = \sum_{i=0}^{n-1} R^i \cdot d_i$$
+
+$$\overset{\color{#6d7e44}{2 \ 1 \ 0}}{123}_{(10)} = (10^{2} \cdot 1) + (10^{1} \cdot 2) + (10^{0} \cdot 3)$$
+
+$$
+\begin{array}{r}
+  \color{#6d7e44}{\scriptsize 7 \  \ 6 \ \ \ 5 \ \ \ 4 \ \ \ 3 \ \ \ 2 \ \ \ 1 \ \ \ 0 \ \ \ \ } \\[-1em]
+  \mathtt{0 \ 1 \ 1 \ 1 \ 1 \ 0 \ 1 \ 1}_{(2)}
+\end{array} 
+= (2^{7} \cdot 0) + (2^{6} \cdot 1) + (2^{5} \cdot 1) + (2^{4} \cdot 1) + (2^{3} \cdot 1) + (2^{2} \cdot 0) + (2^{1} \cdot 1) + (2^{0} \cdot 1) = 123_{(10)}
+$$
+
+---
+
+# Converting decimal numbers to binary
+
+## Steps:
+
+<div class = "justify lh-20">
+
+1. Divide the decimal number by 2. The remainder of the division will be either 0 or 1.
+1. If the remainder is 0, write down a 0.
+1. If the remainder is 1, write down a 1.
+1. Repeat steps 2 and 3 until the decimal number is 0.
+1. Read the numbers **from bottom to top** to get the binary number.
+
+</div>
+
+---
+
+# Example
+$$123_{10}$$
+
+<div class="columns">
+<div class="card">
+
+- 123 / 2 = 61 (remainder 1)
+- Write down a 1.
+- 61 / 2 = 30 (remainder 1)
+- Write down a 1.
+- 30 / 2 = 15 (remainder 0)
+- Write down a 0.
+- 15 / 2 = 7 (remainder 1)
+- Write down a 1.
+
+</div>
+<div class="card">
+
+- 7 / 2 = 3 (remainder 1)
+- Write down a 1.
+- 3 / 2 = 1 (remainder 1)
+- Write down a 1.
+- 1 / 2 = 0 (remainder 1)
+- Write down a 1.
+
+</div></div>
+
+---
+
+<style scoped>
+  table tbody td {
+    padding: 0 !important;
+  }
+  table {
+    width: 100%;
+    margin: 0.8em 0;
+    font-size: 16px;
+  }
+</style>
+
+# Converting binary numbers to oct
+$$1111011_{2}$$
+
+<div class="columns">
+<div>
+
+| Radix | Value | Binary Value | Symbol |
+| :--- | :---: | :---: | :---: |
+| Octal | 0 | 0000 | 0 |
+| Octal | 1 | 0001 | 1 |
+| Octal | 2 | 0010 | 2 |
+| Octal | 3 | 0011 | 3 |
+| Octal | 4 | 0100 | 4 |
+| Octal | 5 | 0101 | 5 |
+| Octal | 6 | 0110 | 6 |
+| Octal | 7 | 0111 | 7 |
+| Hexadecimal | 8 | 1000 | 8 |
+| Hexadecimal | 9 | 1001 | 9 |
+| Hexadecimal | 10 | 1010 | A |
+| Hexadecimal | 11 | 1011 | B |
+| Hexadecimal | 12 | 1100 | C |
+| Hexadecimal | 13 | 1101 | D |
+| Hexadecimal | 14 | 1110 | E |
+| Hexadecimal | 15 | 1111 | F |
+</div>
+
+
+001.111.011	= 1.7.3 
+0111.1011	= 7.B
+
+---
+
+# Unsigned Representation
+
+![USR](USR.svg)
+
+---
+
+# Sign-Magnitude Representation
+
+![SM](SM.svg)
+
+---
+
+# Data in a computer 
+
+## can essentially be stored using two standards: 
+
+1. integers represented in binary,
+
+1.  real (floating-point) numbers stored according to the IEEE 754 standard.
+
+
+Everything else is a combination or interpretation based on these two fundamental forms of representation.
+
+
+
+
+---
+# Summary 
+
+This archive provides a pre-configured, lightweight MinGW (Minimalist GNU for Windows) environment tailored for compiling and building C and C++ programs directly from the command line or via Makefile scripts.
+
+## What is MinGW?
+MinGW is a minimalist development environment for native Microsoft Windows applications. It provides a complete open-source programming toolchain that allows you to use standard GNU utilities on Windows.
+
+### Included Toolchain (32-bit)
+GCC / G++: The GNU C and C++ compilers required to translate your source code into executable binaries.
+GNU Make: Build automation tool used to execute Makefile instructions and manage project dependencies efficiently.
+Architecture: 32-bit version, ensuring high compatibility and lightweight performance for classroom environments.
+
+## Installation Directory Structure
+__To ensure everything works smoothly, extract the downloaded archive so that the folder structure looks exactly like this on your main drive:__
+
+```C:\MinGW\bin\```
+
+(Make sure the path to the executable binaries ends up being ```C:\MinGW\bin```).
+
+Quick PATH Configuration (PowerShell)
+
+The easiest way to make the compiler globally recognized by your system is to add it to your user PATH.
+
+1. Copy the PowerShell script below to your clipboard:
+
+    ```powershell
+    $path = [System.Environment]::GetEnvironmentVariable("PATH", "User")
+    if (-not ($path -like "*C:\mingw\bin*")) {
+        [System.Environment]::SetEnvironmentVariable("PATH", "C:\mingw\bin;$path", "User")
+        Write-Host "Added C:\mingw\bin to PATH."
+    } else {
+        Write-Host "The path is already in PATH."
+    }
+    ```
+
+2. Open PowerShell on your computer.
+
+3. Paste the script and press Enter.
+
+4. Restart your terminal or VS Code, and gcc / make will be fully ready to use!
+
+---
+
+# Summary 
+Environment Setup & Build Basics
+Welcome to the starter project! This is a minimalist C project designed to help you get familiar with Visual Studio Code, manual compilation, and basic build tools.
+
+```
+Project Structure
+│   compile.bat        # Quick script for manual command-line compilation
+│   main.c             # Simple starting C source code
+│   Makefile           # Standard build automation script
+│
+└───.vscode
+        launch.json    # Debugger configuration
+        settings.json  # Editor workspace settings
+        tasks.json     # Build tasks integration for VS Code
+```
+
+## Prerequisites (Required)
+
+Before opening this project, ensure you have the following installed on your system:
+
+- Visual Studio Code (VS Code) – Installed and ready.
+- MinGW (GCC compiler for Windows)
+- Crucial Step: Add the path to your MinGW bin directory (e.g., ```C:\MinGW\bin```) to your system's Environment Variables (PATH) so that gcc and make commands are globally accessible in your terminal.
+
+## Getting Started:
+
+- Download and extract the project archive (.zip) to your workspace folder.
+- Open the extracted folder in Visual Studio Code.
+- Explore the files and follow along with the lab instructions to test building via CLI, compile.bat, and the Makefile.

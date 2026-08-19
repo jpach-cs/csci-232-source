@@ -1,11 +1,12 @@
-name: Bulk Compile Marp Slides & Deploy to Web
+name: Bulk Compile Presentations, Labs & Assignments & Deploy to Web
+
 on:
   push:
     branches:
       - main
 
 jobs:
-  build-slides:
+  build-materials:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Repo
@@ -16,69 +17,111 @@ jobs:
           mkdir -p build_output
           chmod 777 build_output
 
-      #zbedny komentarz
-
-      # Dynamiczna pętla przechodząca przez wszystkie foldery wykładów
-      # Kompilujemy HTML i PDF, a potem dorzucamy do build_output wszystkie zasoby z folderu źródłowego
-      - name: Compile All Presentations
+      # ==========================================
+      # 1. KROK: Prezentacje i Laboratoria (Marp Docker)
+      # ==========================================
+      - name: Process Presentations & Laboratories
         run: |
-          for dir in presentations/*/; do
+          echo "=== Processing Presentations & Labs ==="
+          for dir in presentations/*/*/; do
             if [ -d "$dir" ]; then
-              dir_name=$(basename "$dir")
-              echo "Processing directory: $dir_name"
+              # Usuwa "presentations/" z początku ścieżki (zostaje np. "lectures/lecture01-intro/")
+              rel_path=${dir#presentations/}
+              rel_path=${rel_path%/}
               
-              md_file=$(find "$dir" -maxdepth 1 -name "*.md" | head -n 1)
+              echo "Processing: $rel_path"
+              md_file=$(find "$dir" -maxdepth 1 -name "*.md" ! -name "*.bak" | head -n 1)
               
               if [ -n "$md_file" ]; then
                 echo "Found markdown file: $md_file"
                 
-                # Tworzymy podfolder wyjściowy i nadajemy uprawnienia zapisu dla kontenera
-                mkdir -p "build_output/$dir_name"
-                chmod 777 "build_output/$dir_name"
+                mkdir -p "build_output/$rel_path"
+                chmod 777 "build_output/$rel_path"
                 
                 theme_arg=""
                 if [ -f "${dir}mtech-theme.css" ]; then
                   theme_arg="--theme-set ${dir}mtech-theme.css"
+                elif [ -f "presentations/mtech-theme.css" ]; then
+                  theme_arg="--theme-set presentations/mtech-theme.css"
                 fi
                 
-                # Kompilacja HTML
+                # HTML
                 docker run --rm -v "$PWD:/work" -w /work marpteam/marp-cli:latest \
                   $theme_arg --html --allow-local-files \
-                  "$md_file" -o "build_output/$dir_name/index.html"
+                  "$md_file" -o "build_output/$rel_path/index.html"
                   
-                # Kompilacja PDF
+                # PDF
                 docker run --rm -v "$PWD:/work" -w /work marpteam/marp-cli:latest \
                   $theme_arg --html --allow-local-files --pdf \
-                  "$md_file" -o "build_output/$dir_name/index.pdf"
+                  "$md_file" -o "build_output/$rel_path/index.pdf"
                 
-                # ROZWIĄZANIE: Kopiujemy absolutnie wszystkie pliki z folderu źródłowego wykładu (obrazy, style itp.)
-                # bezpośrednio do folderu wyjściowego, aby HTML miał do nich dostęp obok siebie.
-                # Wykluczamy plik źródłowy .md, żeby nie śmiecić na serwerze.
-                find "$dir" -maxdepth 1 -type f ! -name "*.md" ! -name "*.css" ! -name "*.pdf" -exec cp {} "build_output/$dir_name/" \;
-                
-              else
-                echo "No markdown file found in $dir, skipping."
+                # Kopiowanie grafik i plików towarzyszących
+                find "$dir" -maxdepth 1 -type f ! -name "*.md" ! -name "*.css" ! -name "*.pdf" ! -name "*.bak" -exec cp {} "build_output/$rel_path/" \;
               fi
             fi
           done
 
+      # ==========================================
+# ==========================================
+      # 2. KROK: Zadania / Assignments (Pandoc Docker)
+      # ==========================================
+      - name: Process Assignments
+        run: |
+          echo "=== Processing Assignments ==="
+          for dir in assignments/*/; do
+            if [ -d "$dir" ]; then
+              rel_path=${dir%/}
+              
+              echo "========================================"
+              echo "Processing Assignment: $rel_path"
+              echo "========================================"
+
+              md_file=$(find "$dir" -maxdepth 1 -type f -name "*.md" ! -name "*.bak" | head -n 1)
+
+              if [ -n "$md_file" ]; then
+                echo "Found assignment file: $md_file"
+                
+                mkdir -p "build_output/$rel_path"
+
+                # HTML via Pandoc Docker
+                docker run --rm --user $(id -u):$(id -g) -v "$PWD:/data" pandoc/extra "$md_file" \
+                  --standalone \
+                  --from markdown \
+                  --to html5 \
+                  -o "build_output/$rel_path/index.html"
+
+                # PDF via Pandoc Docker (zmiana na xelatex)
+                docker run --rm --user $(id -u):$(id -g) -v "$PWD:/data" pandoc/extra "$md_file" \
+                  --pdf-engine=xelatex \
+                  -o "build_output/$rel_path/index.pdf"
+
+                # Kopiowanie grafik i załączników
+                find "$dir" -maxdepth 1 -type f ! -name "*.md" ! -name "*.bak" -exec cp {} "build_output/$rel_path/" \;
+
+                echo "Generated output in build_output/$rel_path/"
+              else
+                echo "No Markdown file found in $dir"
+              fi
+            fi
+          done
+
+      # ==========================================
+      # 3. KROK: Deploy do repozytorium WWW
+      # ==========================================
       - name: Deploy to Public Repository
         run: |
-          # 1. Klonowanie publicznego repozytorium strony za pomocą tokenu
-          git clone https://${{ secrets.GH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
+          # Poprawiono literał URL (github.com z małej litery)
+          git clone https://${{ secrets.PUBLIC_REPO_TOKEN }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
           
-          # 2. Upewnienie się, że bazowy folder na slajdy istnieje
-          mkdir -p public_repo/teaching/csci-232/slides/
+          mkdir -p public_repo/teaching/csci-232/
           
-          # 3. Kopiowanie całej struktury folderów (teraz zawierających HTML, PDF oraz grafiki towarzyszące)
-          cp -r build_output/* public_repo/teaching/csci-232/slides/
+          # Kopiuje zbudowane pliki z build_output
+          cp -r build_output/* public_repo/teaching/csci-232/
           
-          # 4. Konfiguracja tożsamości bota Git
           cd public_repo
           git config --global user.name "Marp Autograder Bot"
           git config --global user.email "bot@mtech.edu"
           
-          # 5. Sprawdzenie różnic i wypchnięcie na produkcję nowych plików i zasobów
           git add .
-          git diff-index --quiet HEAD || git commit -m "Automated bulk update of CSCI 232 slides and assets"
+          git diff-index --quiet HEAD || git commit -m "Automated update of CSCI 232 materials"
           git push origin main
