@@ -111,7 +111,7 @@ jobs:
       - name: Deploy to Public Repository
         run: |
           # Poprawiono literał URL (github.com z małej litery)
-          git clone https://${{ secrets.PGH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
+          git clone https://${{ secrets.GH_PAT }}@github.com/jpach-cs/jpach-cs.github.io.git public_repo
           
           mkdir -p public_repo/teaching/csci-232/
           
